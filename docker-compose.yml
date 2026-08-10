@@ -1,0 +1,16 @@
+services:
+  tesis-trafico-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tesis_trafico_streamlit
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - ROBOFLOW_API_KEY=${ROBOFLOW_API_KEY:-}
+      - ROBOFLOW_WORKSPACE=${ROBOFLOW_WORKSPACE:-katherines-workspace-q66ls}
+      - ROBOFLOW_WORKFLOW_ID=${ROBOFLOW_WORKFLOW_ID:-tesis-trafico-vtesis-trafico-2-rfdetr-small-t1-logic}
+      - ROBOFLOW_API_URL=${ROBOFLOW_API_URL:-https://serverless.roboflow.com}
+    restart: unless-stopped
