@@ -1,6 +1,6 @@
 """
+Simulador de Detecciones de Tráfico - Escenarios Sintéticos.
 Generador de Escenarios de Prueba y Detecciones Simuladas (Modo Resiliencia / Demo)
-Permite demostrar el sistema de pórtico VMS y semáforos sin depender exclusivamente de cuota de API.
 """
 
 from typing import Dict, Any, List, Tuple

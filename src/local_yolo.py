@@ -62,8 +62,8 @@ class LocalYOLOModel:
 
         start_time = time.time()
         
-        # Ejecutar inferencia YOLO con tamaño explícito imgsz=640
-        results = self.model(image, conf=conf, iou=iou, imgsz=640, verbose=False)
+        # Ejecutar inferencia YOLO con valores por defecto del modelo
+        results = self.model(image, conf=conf, verbose=False)
         latency_ms = (time.time() - start_time) * 1000
 
         detections = []

@@ -1,25 +1,23 @@
 # 🚦 Simulador de Sistema Inteligente de Señalización Vial (SMV) y Pórtico VMS
 
-> **Proyecto Factible / Tesis de Grado en Ingeniería:**
-> Sistema de Señalización Inteligente en Intersecciones y Vías Rápidas con Detección de Objetos en Roboflow, Paneles de Mensajería Variable (VMS) y Semáforos Adaptativos.
+> Sistema de Señalización Inteligente en Intersecciones y Vías Rápidas con Detección de Objetos, Paneles de Mensajería Variable (VMS).
 
 ---
 
 ## 🌟 Descripción General
 
-Esta plataforma interactiva desarrollada en **Streamlit** y empaquetada en **Docker** permite simular y evaluar en tiempo real la respuesta de un **Sistema de Mensajes Variables (VMS / Panel LED)** y de **Semáforos Inteligentes**, basándose en la inferencia de visión artificial proporcionada por **Roboflow Workflows**.
+Esta plataforma interactiva desarrollada en **Streamlit** y empaquetada en **Docker** permite simular y evaluar en tiempo real la respuesta de un **Sistema Inteligente de Mensajes Variables (VMS / Panel LED)**, basándose en la inferencia de visión artificial proporcionada por modelos **YOLO locales**.
 
 ### 🎯 Características Principales
 1. **Pórtico VMS Virtual:** Pantalla LED de alta visibilidad que muestra advertencias automáticas según el evento detectado:
    - 🚨 `¡PELIGRO! VEHÍCULO EN CONTRAFLUJO - NO ADELANTAR` (Rojo Neón intermitente).
-   - 🚧 `¡ALERTA! MAQUINARIA TRABAJANDO - REDUZCA VELOCIDAD A 30 KM/H` (Naranja / Ámbar).
-   - 🏜️ `¡PELIGRO! ALTA ACUMULACIÓN DE ARENA - USE CARRIL IZQUIERDO` (Amarillo Arena).
-   - 🚦 `CONGESTIÓN VEHICULAR - VELOCIDAD MÁX 40 KM/H` (Control de tiempos de semáforo).
+   - 🚶 `PRECAUCIÓN - PEATONES EN CALZADA DETECTADOS` (Cyan Neón).
+   - 🏍️ `PRECAUCIÓN VIAL - MOTOCICLETAS EN LA VÍA` (Verde Lima LED).
+   - ⚠️ `VÍA CONGESTIONADA - REDUZCA LA VELOCIDAD Y ESPERE SU TURNO` (Naranja LED).
    - 🛣️ `TRÁFICO FLUIDO - RESPETE EL LÍMITE DE VELOCIDAD` (Verde).
-2. **Semáforo Inteligente Adaptativo:** Ajusta el tiempo de la fase verde según la densidad de vehículos en cola.
-3. **Integración con Roboflow:** Conectado mediante el SDK oficial y endpoint REST con reintentos y tolerancia a fallos.
-4. **Métricas Académicas para Tesis:** Tacómetros de latencia (ms), distribución de alertas, gráficos interactivos con Plotly y descarga del registro de auditoría en formato **CSV**.
-5. **Modo Resiliencia / Demo Offline:** Incluye escenarios sintéticos calibrados para presentaciones y defensas sin dependencia de conexión externa.
+2. **Detección de Múltiples Clases:** Identifica automóviles, vehículos en contraflujo, motocicletas, ciclistas y peatones interactuando con la vía.
+3. **Métricas Académicas para Tesis:** Tacómetros de latencia (ms), distribución de alertas, gráficos interactivos con Plotly y descarga del registro de auditoría en formato **CSV**.
+4. **Modo Resiliencia / Demo Offline:** Incluye escenarios sintéticos calibrados para presentaciones y defensas sin dependencia de conexión externa.
 
 ---
 
@@ -34,14 +32,7 @@ Navega a la carpeta del proyecto:
 cd c:/Users/TheGhost/Desktop/TESIS_TRAFICO
 ```
 
-### 2. Configurar la clave de Roboflow (Opcional en .env)
-Copia el archivo de ejemplo o edita `.env`:
-```bash
-cp .env.example .env
-```
-Agrega tu clave `ROBOFLOW_API_KEY` (también puedes ingresarla directamente desde la interfaz web).
-
-### 3. Construir y Levantar el Contenedor
+### 2. Construir y Levantar el Contenedor
 Ejecuta el siguiente comando:
 ```bash
 docker compose up --build -d
@@ -73,7 +64,7 @@ Abre tu navegador en:
 ## 📂 Estructura del Código
 
 ```
-TESIS_TRAFICO/
+SMV/
 ├── Dockerfile                  # Imagen Docker optimizada (Python 3.11-slim + OpenCV)
 ├── docker-compose.yml          # Configuración de orquestación y puertos (8501:8501)
 ├── requirements.txt            # Dependencias del proyecto
@@ -81,8 +72,7 @@ TESIS_TRAFICO/
 ├── app.py                      # Aplicación principal Streamlit
 ├── smoke_test.py               # Pruebas de integración
 └── src/
-    ├── roboflow_client.py      # Cliente de Roboflow Workflow con SDK & REST
-    ├── traffic_logic.py        # Motor de reglas viales, alertas VMS y semáforos
+    ├── traffic_logic.py        # Motor de reglas viales y alertas VMS
     ├── mock_detector.py        # Generador de escenarios sintéticos para demo
-    └── ui_components.py        # Componentes CSS/HTML para pórtico LED y semáforos
+    └── ui_components.py        # Componentes CSS/HTML para pórtico LED virtual
 ```

@@ -1,6 +1,6 @@
 """
-Lógica de Negocio y Reglas de Tráfico para Tesis:
-- Detección de eventos críticos (contraflujo, maquinaria, acumulación de arena, ciclistas).
+Lógica de Negocio y Reglas de Tráfico:
+- Detección de eventos críticos.
 - Generación de mensajes y estados para el Panel de Mensaje Variable (VMS Virtual).
 - Control de semaforización inteligente basado en densidad vehicular.
 - Anotación visual sobre frames de video / imagen.
@@ -14,22 +14,50 @@ from datetime import datetime
 # Paleta de colores para visualización de clases (BGR para OpenCV)
 CLASS_COLORS_BGR = {
     "contraflujo": (0, 0, 255),       # Rojo brillante
-    "maquinaria": (0, 140, 255),      # Naranja/Ámbar
-    "arena": (0, 215, 255),           # Amarillo arena
-    "vehiculo": (255, 150, 0),        # Azul cielo / turquesa
-    "car": (255, 150, 0),
-    "auto": (255, 150, 0),
-    "truck": (255, 100, 0),
-    "bus": (255, 80, 0),
-    "moto": (200, 255, 0),
-    "motocicle": (200, 255, 0),       # Clase del modelo best.pt
-    "motorcycle": (200, 255, 0),
-    "bicicleta": (0, 255, 128),       # Verde claro
-    "bicycle": (0, 255, 128),
-    "peaton": (255, 0, 255),          # Magenta
-    "people": (255, 0, 255),          # Clase del modelo best.pt
-    "person": (255, 0, 255),
+    
+    # Peatones (Rojo, BGR: 0, 0, 255)
+    "peaton": (0, 0, 255),
+    "person": (0, 0, 255),
+    "people": (0, 0, 255),
+    "pedestrian": (0, 0, 255),
+    
+    # Motocicletas (Cyan, BGR: 255, 255, 0)
+    "moto": (255, 255, 0),
+    "motocicle": (255, 255, 0),
+    "motorcycle": (255, 255, 0),
+    
+    # Bicicletas (Verde, BGR: 0, 255, 0)
+    "bicicleta": (0, 255, 0),
+    "bicycle": (0, 255, 0),
+    
+    # Camiones (Naranja/Amarillo, BGR: 0, 165, 255)
+    "truck": (0, 165, 255),
+    "camion": (0, 165, 255),
+    
+    # Autobuses (Morado/Magenta, BGR: 255, 0, 255)
+    "bus": (255, 0, 255),
+    "autobus": (255, 0, 255),
+    
+    # Carros / Vehículos genéricos (Azul, BGR: 255, 100, 0)
+    "vehiculo": (255, 100, 0),
+    "car": (255, 100, 0),
+    "auto": (255, 100, 0),
+    "carro": (255, 100, 0),
+    "camioneta": (255, 100, 0),
+    
     "default": (200, 200, 200)
+}
+
+CLASS_TRANSLATIONS = {
+    "car": "CARRO",
+    "truck": "CAMIÓN",
+    "bus": "AUTOBÚS",
+    "motorcycle": "MOTOCICLETA",
+    "motocicle": "MOTOCICLETA",
+    "bicycle": "BICICLETA",
+    "pedestrian": "PEATÓN",
+    "person": "PEATÓN",
+    "people": "PEATÓN"
 }
 
 def get_class_color(class_name: str) -> Tuple[int, int, int]:
@@ -193,7 +221,8 @@ def draw_detections(
         x1, y1 = max(0, x1), max(0, y1)
         x2, y2 = min(w - 1, x2), min(h - 1, y2)
 
-        cls_name = d.get("class", "objeto").upper()
+        cls_name = d.get("class", "objeto").lower()
+        display_name = CLASS_TRANSLATIONS.get(cls_name, cls_name).upper()
         conf = d.get("confidence", 1.0)
         color = get_class_color(cls_name)
 
@@ -202,7 +231,7 @@ def draw_detections(
         cv2.rectangle(annotated, (x1, y1), (x2, y2), color, thickness)
 
         # Etiqueta de texto
-        label = f"{cls_name}"
+        label = f"{display_name}"
         if show_confidence:
             label += f" {conf * 100:.0f}%"
 

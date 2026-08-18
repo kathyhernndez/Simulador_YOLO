@@ -1,7 +1,6 @@
 """
 Simulador de Sistema Inteligente de Señalización de Tráfico y Panel VMS
-Integración con Modelo Local YOLO (best.pt) y Roboflow Workflow API
-Desarrollado para Proyecto Factible / Tesis de Grado.
+Integración con Modelo Local YOLO (best.pt)
 """
 
 import os
@@ -29,7 +28,6 @@ except ImportError:
     HAS_ULTRALYTICS = False
 
 # Importar módulos propios
-from src.roboflow_client import RoboflowClient, RoboflowWorkflowError
 from src.traffic_logic import TrafficAnalyticsEngine, draw_detections, get_class_color
 from src.mock_detector import MockTrafficScenarioGenerator
 from src.ui_components import get_custom_css, render_vms_html
@@ -51,8 +49,6 @@ if "analytics_engine" not in st.session_state:
     st.session_state.analytics_engine = TrafficAnalyticsEngine()
 if "last_results" not in st.session_state:
     st.session_state.last_results = None
-if "api_key" not in st.session_state:
-    st.session_state.api_key = os.getenv("ROBOFLOW_API_KEY", "")
 if "model_path" not in st.session_state:
     st.session_state.model_path = "best.pt"
 
@@ -65,7 +61,7 @@ def load_local_yolo(model_path: str):
     if not os.path.exists(model_path):
         return None
     try:
-        model = YOLO(model_path)
+        model = LocalYOLOModel(model_path)
         return model
     except Exception as e:
         st.error(f"Error cargando modelo YOLO '{model_path}': {e}")
@@ -74,7 +70,7 @@ def load_local_yolo(model_path: str):
 
 # ----------------- BARRA LATERAL (CONFIGURACIÓN) -----------------
 with st.sidebar:
-    st.title("⚙️ Configuración")
+    st.title("Configuración")
     st.caption("Proyecto Factible de Tesis: SMV & YOLO")
     st.markdown("---")
 
@@ -83,7 +79,6 @@ with st.sidebar:
         "Modo de Inferencia:",
         [
             "🤖 Modelo Local YOLO (best.pt)",
-            "🚀 Roboflow Workflow API (Nube)",
             "🧪 Simulación de Escenarios (Offline / Demo)"
         ],
         index=0
@@ -93,20 +88,20 @@ with st.sidebar:
 
     # Configuración según modo
     if operation_mode == "🤖 Modelo Local YOLO (best.pt)":
-        st.subheader("📦 Modelo Local YOLO")
+        st.subheader(" Modelo Local YOLO")
         
         # Verificar existencia de best.pt
         model_exists = os.path.exists(st.session_state.model_path)
         if model_exists:
             file_size_mb = os.path.getsize(st.session_state.model_path) / (1024 * 1024)
-            st.success(f"✅ Archivo encontrado: `{st.session_state.model_path}` ({file_size_mb:.1f} MB)")
+            st.success(f" Archivo encontrado: `{st.session_state.model_path}` ({file_size_mb:.1f} MB)")
             
             # Cargar modelo en memoria
             yolo_model = load_local_yolo(st.session_state.model_path)
-            if yolo_model and hasattr(yolo_model, "names"):
-                st.caption(f"**Clases detectables:** {list(yolo_model.names.values())}")
+            if yolo_model and hasattr(yolo_model, "classes"):
+                st.caption(f"**Clases detectables:** {list(yolo_model.classes.values())}")
         else:
-            st.warning(f"⚠️ No se encontró el archivo `{st.session_state.model_path}` en la raíz.")
+            st.warning(f" No se encontró el archivo `{st.session_state.model_path}` en la raíz.")
             uploaded_pt = st.file_uploader("Subir archivo de pesos (.pt):", type=["pt"])
             if uploaded_pt:
                 with open("best.pt", "wb") as f:
@@ -114,33 +109,13 @@ with st.sidebar:
                 st.session_state.model_path = "best.pt"
                 st.rerun()
 
-    elif operation_mode == "🚀 Roboflow Workflow API (Nube)":
-        st.subheader("🔑 Parámetros de Roboflow")
-        api_key_input = st.text_input(
-            "Roboflow API Key:",
-            value=st.session_state.api_key,
-            type="password",
-            help="Introduce tu clave privada de Roboflow (app.roboflow.com/settings/api)"
-        )
-        if api_key_input != st.session_state.api_key:
-            st.session_state.api_key = api_key_input
-
-        workspace_input = st.text_input(
-            "Workspace Slug:",
-            value=os.getenv("ROBOFLOW_WORKSPACE", "katherines-workspace-q66ls")
-        )
-        workflow_input = st.text_input(
-            "Workflow ID:",
-            value=os.getenv("ROBOFLOW_WORKFLOW_ID", "tesis-trafico-vtesis-trafico-2-rfdetr-small-t1-logic")
-        )
-
     st.markdown("---")
-    st.subheader("🎯 Parámetros de Detección")
+    st.subheader(" Parámetros de Detección")
     conf_threshold = st.slider(
         "Umbral de Confianza (Confidence):",
         min_value=0.10,
         max_value=1.00,
-        value=0.35,
+        value=0.25,
         step=0.05
     )
     frame_skip = st.slider(
@@ -159,16 +134,6 @@ with st.sidebar:
 local_yolo_instance = None
 if operation_mode == "🤖 Modelo Local YOLO (best.pt)":
     local_yolo_instance = load_local_yolo(st.session_state.model_path)
-
-# Cliente Roboflow como alternativa
-roboflow_client = None
-if operation_mode == "🚀 Roboflow Workflow API (Nube)":
-    roboflow_client = RoboflowClient(
-        api_key=st.session_state.api_key,
-        workspace_name=os.getenv("ROBOFLOW_WORKSPACE", "katherines-workspace-q66ls"),
-        workflow_id=os.getenv("ROBOFLOW_WORKFLOW_ID", "tesis-trafico-vtesis-trafico-2-rfdetr-small-t1-logic")
-    )
-
 
 # ----------------- CABECERA PRINCIPAL -----------------
 st.markdown("""
@@ -204,58 +169,14 @@ def run_detection_pipeline(frame: np.ndarray, conf_val: float) -> tuple:
     annotated = frame.copy()
 
     if operation_mode == "🤖 Modelo Local YOLO (best.pt)":
-        if local_yolo_instance is not None:
-            start_t = time.time()
-            # Inferencia con YOLO local
-            results = local_yolo_instance(frame, conf=conf_val, verbose=False)
-            latency_ms = (time.time() - start_t) * 1000
-
-            if results and len(results) > 0:
-                result = results[0]
-                # Frame anotado con ultralytics
-                annotated = result.plot()
-
-                # Extraer cajas y clases
-                boxes = result.boxes
-                if boxes is not None:
-                    for box in boxes:
-                        cls_id = int(box.cls[0].item())
-                        cls_name = local_yolo_instance.names.get(cls_id, str(cls_id))
-                        conf_score = float(box.conf[0].item())
-                        xyxy = box.xyxy[0].tolist()
-                        x1, y1, x2, y2 = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
-                        
-                        detections.append({
-                            "class": str(cls_name).lower().strip(),
-                            "confidence": round(conf_score, 3),
-                            "box": {
-                                "x1": x1,
-                                "y1": y1,
-                                "x2": x2,
-                                "y2": y2,
-                                "width": max(1, x2 - x1),
-                                "height": max(1, y2 - y1)
-                            }
-                        })
+        if local_yolo_instance is not None and local_yolo_instance.is_loaded:
+            detections, latency_ms, _ = local_yolo_instance.infer(frame, conf=conf_val)
+            annotated = draw_detections(frame, detections)
         else:
             # Fallback a mock si el modelo no está listo
             detections = MockTrafficScenarioGenerator.get_scenario_detections("normal")
             annotated = draw_detections(frame, detections)
             latency_ms = 15.0
-
-    elif operation_mode == "🚀 Roboflow Workflow API (Nube)":
-        if roboflow_client and roboflow_client.is_configured:
-            try:
-                detections, latency_ms, _ = roboflow_client.infer(frame, confidence_threshold=conf_val)
-                annotated = draw_detections(frame, detections)
-            except Exception as e:
-                detections = MockTrafficScenarioGenerator.get_scenario_detections("normal")
-                annotated = draw_detections(frame, detections)
-                latency_ms = 20.0
-        else:
-            detections = MockTrafficScenarioGenerator.get_scenario_detections("normal")
-            annotated = draw_detections(frame, detections)
-            latency_ms = 20.0
 
     else:  # Simulación de Escenarios
         detections = MockTrafficScenarioGenerator.get_scenario_detections("normal")
@@ -279,7 +200,11 @@ if input_source == "📤 Subir Video (.mp4, .avi)":
         fps = int(cap.get(cv2.CAP_PROP_FPS)) or 25
 
         st.success(f"Video cargado exitosamente: {total_frames} fotogramas a {fps} FPS.")
-        start_btn = st.button("▶️ Iniciar Simulación en Tiempo Real con YOLO", type="primary")
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            start_btn = st.button(" Iniciar Simulación en Tiempo Real con YOLO", type="primary")
+        with col_btn2:
+            stop_btn = st.button(" Detener Simulación", type="secondary")
 
         if start_btn:
             with tab_col1:
@@ -338,11 +263,11 @@ elif input_source == "🖼️ Subir Imagen Fija (.jpg, .png)":
         analysis = st.session_state.analytics_engine.evaluate_frame_events(detections)
 
         with tab_col1:
-            st.markdown("### 🎥 Fotograma Analizado con YOLO")
+            st.markdown("###  Fotograma Analizado con YOLO")
             st.image(annotated_frame, channels="BGR", use_container_width=True)
             st.caption(f"Latencia de inferencia: **{latency_ms:.1f} ms** | Elementos detectados: **{len(detections)}**")
         with tab_col2:
-            st.markdown("### 📟 Panel de Mensaje Variable (VMS)")
+            st.markdown("###  Panel de Mensaje Variable (VMS)")
             st.markdown(render_vms_html(analysis["vms"]), unsafe_allow_html=True)
 
 
@@ -354,7 +279,7 @@ elif input_source == "🏞️ Escenarios de Prueba Sintéticos (Demo)":
     selected_key = scenario_keys[scenario_labels.index(selected_label)]
     scenario_info = MockTrafficScenarioGenerator.SCENARIOS[selected_key]
     
-    st.info(f"ℹ️ **Descripción:** {scenario_info['desc']}")
+    st.info(f" **Descripción:** {scenario_info['desc']}")
 
     raw_frame = MockTrafficScenarioGenerator.generate_synthetic_road_image(selected_key)
     
@@ -371,18 +296,18 @@ elif input_source == "🏞️ Escenarios de Prueba Sintéticos (Demo)":
     analysis = st.session_state.analytics_engine.evaluate_frame_events(detections)
 
     with tab_col1:
-        st.markdown("### 🎥 Escenario Sintético Analizado")
+        st.markdown("###  Escenario Sintético Analizado")
         st.image(annotated_frame, channels="BGR", use_container_width=True)
         st.caption(f"Detecciones activas: {len(detections)} elementos | Latencia: {latency_ms:.1f} ms")
 
     with tab_col2:
-        st.markdown("### 📟 Panel de Mensaje Variable (VMS Virtual)")
+        st.markdown("###  Panel de Mensaje Variable (VMS Virtual)")
         st.markdown(render_vms_html(analysis["vms"]), unsafe_allow_html=True)
 
 
-# ----------------- PANEL DE MÉTRICAS Y TELEMETRÍA PARA TESIS -----------------
+# ----------------- PANEL DE MÉTRICAS Y TELEMETRÍA -----------------
 st.markdown("---")
-st.subheader("📊 Métricas de Desempeño y Telemetría del Sistema")
+st.subheader(" Métricas de Desempeño y Telemetría del Sistema")
 
 history = st.session_state.analytics_engine.history_logs
 
@@ -428,7 +353,7 @@ if history:
     # Gráficas analíticas de tesis con Plotly
     g_col1, g_col2 = st.columns(2)
     with g_col1:
-        st.markdown("#### 📈 Historial de Densidad Vehicular")
+        st.markdown("####  Historial de Densidad Vehicular")
         fig_line = px.line(
             df_history.reset_index(),
             x="index",
@@ -441,7 +366,7 @@ if history:
         st.plotly_chart(fig_line, use_container_width=True)
 
     with g_col2:
-        st.markdown("#### 🎯 Distribución de Niveles de Alerta")
+        st.markdown("####  Distribución de Niveles de Alerta")
         fig_pie = px.pie(
             df_history,
             names="Nivel_Alerta",
@@ -459,7 +384,7 @@ if history:
         st.plotly_chart(fig_pie, use_container_width=True)
 
     # Tabla de Eventos y Descarga para Tesis
-    st.markdown("#### 📋 Registro de Auditoría de Eventos VMS")
+    st.markdown("####  Registro de Auditoría de Eventos VMS")
     st.dataframe(df_history.tail(15), use_container_width=True)
 
     csv_data = df_history.to_csv(index=False).encode('utf-8')

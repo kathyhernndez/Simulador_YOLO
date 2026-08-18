@@ -1,6 +1,5 @@
 """
 Componentes Visuales y Estilos CSS Personalizados para el Simulador VMS y Semáforo Inteligente
-Diseñado con estética profesional para Tesis de Grado.
 """
 
 def get_custom_css() -> str:
