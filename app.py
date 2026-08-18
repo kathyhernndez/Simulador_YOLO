@@ -54,7 +54,7 @@ if "model_path" not in st.session_state:
 
 
 @st.cache_resource
-def load_local_yolo(model_path: str):
+def load_local_yolo(model_path: str, _mod_time: float = 0.0):
     """Carga y almacena en caché el modelo local YOLO."""
     if not HAS_ULTRALYTICS:
         return None
@@ -97,7 +97,8 @@ with st.sidebar:
             st.success(f" Archivo encontrado: `{st.session_state.model_path}` ({file_size_mb:.1f} MB)")
             
             # Cargar modelo en memoria
-            yolo_model = load_local_yolo(st.session_state.model_path)
+            mod_time = os.path.getmtime(st.session_state.model_path) if os.path.exists(st.session_state.model_path) else 0.0
+            yolo_model = load_local_yolo(st.session_state.model_path, mod_time)
             if yolo_model and hasattr(yolo_model, "classes"):
                 st.caption(f"**Clases detectables:** {list(yolo_model.classes.values())}")
         else:
@@ -133,7 +134,8 @@ with st.sidebar:
 # Cargar modelo local si corresponde
 local_yolo_instance = None
 if operation_mode == "🤖 Modelo Local YOLO (best.pt)":
-    local_yolo_instance = load_local_yolo(st.session_state.model_path)
+    m_time = os.path.getmtime(st.session_state.model_path) if os.path.exists(st.session_state.model_path) else 0.0
+    local_yolo_instance = load_local_yolo(st.session_state.model_path, m_time)
 
 # ----------------- CABECERA PRINCIPAL -----------------
 st.markdown("""
