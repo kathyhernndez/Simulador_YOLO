@@ -10,7 +10,7 @@ Esta plataforma interactiva desarrollada en **Streamlit** y empaquetada en **Doc
 
 ### 🎯 Características Principales
 1. **Sistema Multi-Panel (PMV):** Simulación simultánea de 3 Paneles de Mensajería Variable ubicados en puntos estratégicos (Sector Mercado Viejo) que responden a un Motor Analítico de 5 Prioridades:
-   - **Prioridad 1 (Peligro Crítico/Emergencia):** 🚨 Contraflujos, ambulancias o bloqueos totales. Activa desvíos obligatorios, velocidad de 10 km/h y destellos rojos (Ej: `MERCADO TRANCADO / DESVIO OBLIGADO`).
+   - **Prioridad 1 (Peligro Crítico/Emergencia):** 🚨 Contraflujos, ambulancias o bloqueos totales. Activa desvíos obligatorios, velocidad de 10 km/h y destellos rojos (Ej: `VÍA CONGESTIONADA / DESVIO OBLIGATORIO`).
    - **Prioridad 2 (Advertencia Peatonal):** 🚶 Alta densidad de peatones. Reduce la velocidad a 10 km/h con advertencias amarillas (Ej: `PRIORIDAD PEATON`).
    - **Prioridad 3 (Obstrucciones):** 🚧 Vehículos detenidos o carga/descarga. Advierte paso intermitente (Ej: `CANAL REDUCIDO / PASO INTERMITENTE`).
    - **Prioridad 4 (Congestión):** ⚠️ Tráfico denso. Recomienda desvíos con alertas amarillas (Ej: `CONGESTIÓN EN CALLE GARCES / PREVENTIVO FEDERACIÓN`).

@@ -121,7 +121,7 @@ class TrafficAnalyticsEngine:
             alert_level = "CRITICAL"
             
             pmv1 = {
-                "title": "MERCADO TRANCADO", "message": "DESVIO OBLIGADO\nPOR CALLE FEDERACION",
+                "title": "VÍA CONGESTIONADA", "message": "DESVIO OBLIGATORIO\nPOR CALLE FEDERACION",
                 "color": "#FF1744", "bg_color": "#3A0007", "icon": "⛔", "is_flashing": True, "speed_limit": "10 KM/H"
             }
             pmv2 = {
