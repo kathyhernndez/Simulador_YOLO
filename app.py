@@ -214,8 +214,13 @@ if input_source == "📤 Subir Video (.mp4, .avi)":
                 frame_placeholder = st.empty()
                 perf_placeholder = st.empty()
             with tab_col2:
-                st.markdown("### 📟 Panel VMS Virtual")
-                vms_placeholder = st.empty()
+                st.markdown("### 📟 Paneles VMS Virtuales")
+                st.caption("PMV-1 (Filtro Entrada Este)")
+                vms1_placeholder = st.empty()
+                st.caption("PMV-2 (Antes de Cruce Colón)")
+                vms2_placeholder = st.empty()
+                st.caption("PMV-3 (Bifurcación Manaure)")
+                vms3_placeholder = st.empty()
 
             frame_idx = 0
             progress_bar = st.progress(0)
@@ -239,7 +244,9 @@ if input_source == "📤 Subir Video (.mp4, .avi)":
                 frame_placeholder.image(annotated_frame, channels="BGR", use_container_width=True)
                 perf_placeholder.caption(f"Fotograma: {frame_idx}/{total_frames} | Latencia: {latency_ms:.1f} ms | Detecciones: {len(detections)}")
                 
-                vms_placeholder.markdown(render_vms_html(analysis["vms"]), unsafe_allow_html=True)
+                vms1_placeholder.markdown(render_vms_html(analysis["pmv1"]), unsafe_allow_html=True)
+                vms2_placeholder.markdown(render_vms_html(analysis["pmv2"]), unsafe_allow_html=True)
+                vms3_placeholder.markdown(render_vms_html(analysis["pmv3"]), unsafe_allow_html=True)
 
                 if total_frames > 0:
                     progress_bar.progress(min(1.0, frame_idx / total_frames))
@@ -269,8 +276,13 @@ elif input_source == "🖼️ Subir Imagen Fija (.jpg, .png)":
             st.image(annotated_frame, channels="BGR", use_container_width=True)
             st.caption(f"Latencia de inferencia: **{latency_ms:.1f} ms** | Elementos detectados: **{len(detections)}**")
         with tab_col2:
-            st.markdown("###  Panel de Mensaje Variable (VMS)")
-            st.markdown(render_vms_html(analysis["vms"]), unsafe_allow_html=True)
+            st.markdown("###  Paneles de Mensaje Variable (VMS)")
+            st.caption("PMV-1 (Filtro Entrada Este)")
+            st.markdown(render_vms_html(analysis["pmv1"]), unsafe_allow_html=True)
+            st.caption("PMV-2 (Antes de Cruce Colón)")
+            st.markdown(render_vms_html(analysis["pmv2"]), unsafe_allow_html=True)
+            st.caption("PMV-3 (Bifurcación Manaure)")
+            st.markdown(render_vms_html(analysis["pmv3"]), unsafe_allow_html=True)
 
 
 elif input_source == "🏞️ Escenarios de Prueba Sintéticos (Demo)":
@@ -303,8 +315,13 @@ elif input_source == "🏞️ Escenarios de Prueba Sintéticos (Demo)":
         st.caption(f"Detecciones activas: {len(detections)} elementos | Latencia: {latency_ms:.1f} ms")
 
     with tab_col2:
-        st.markdown("###  Panel de Mensaje Variable (VMS Virtual)")
-        st.markdown(render_vms_html(analysis["vms"]), unsafe_allow_html=True)
+        st.markdown("###  Paneles de Mensaje Variable (VMS Virtual)")
+        st.caption("PMV-1 (Filtro Entrada Este)")
+        st.markdown(render_vms_html(analysis["pmv1"]), unsafe_allow_html=True)
+        st.caption("PMV-2 (Antes de Cruce Colón)")
+        st.markdown(render_vms_html(analysis["pmv2"]), unsafe_allow_html=True)
+        st.caption("PMV-3 (Bifurcación Manaure)")
+        st.markdown(render_vms_html(analysis["pmv3"]), unsafe_allow_html=True)
 
 
 # ----------------- PANEL DE MÉTRICAS Y TELEMETRÍA -----------------

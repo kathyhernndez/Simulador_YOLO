@@ -45,6 +45,11 @@ CLASS_COLORS_BGR = {
     "carro": (255, 100, 0),
     "camioneta": (255, 100, 0),
     
+    # Emergencia (Blanco / Rojo estroboscópico, BGR: 255, 255, 255)
+    "ambulancia": (255, 255, 255),
+    "ambulance": (255, 255, 255),
+    "patrulla": (255, 255, 255),
+    
     "default": (200, 200, 200)
 }
 
@@ -57,7 +62,10 @@ CLASS_TRANSLATIONS = {
     "bicycle": "BICICLETA",
     "pedestrian": "PEATÓN",
     "person": "PEATÓN",
-    "people": "PEATÓN"
+    "people": "PEATÓN",
+    "ambulance": "AMBULANCIA",
+    "ambulancia": "AMBULANCIA",
+    "patrulla": "PATRULLA"
 }
 
 def get_class_color(class_name: str) -> Tuple[int, int, int]:
@@ -74,7 +82,7 @@ class TrafficAnalyticsEngine:
 
     def evaluate_frame_events(self, detections: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
-        Analiza las detecciones de un fotograma y genera el estado del VMS y semáforo.
+        Analiza las detecciones de un fotograma y genera el estado para 3 PMVs simultáneos.
         """
         # Contadores de clases
         class_counts: Dict[str, int] = {}
@@ -86,84 +94,124 @@ class TrafficAnalyticsEngine:
             class_counts[cls] = class_counts.get(cls, 0) + 1
 
         # Contar total de vehículos
-        vehicle_keys = ["vehiculo", "car", "auto", "truck", "bus", "camion", "moto", "motocicle", "motorcycle", "camioneta"]
+        vehicle_keys = ["vehiculo", "car", "auto", "truck", "bus", "camion", "moto", "motocicle", "motorcycle", "camioneta", "ambulance", "ambulancia", "patrulla"]
         total_vehicles = sum(count for cls, count in class_counts.items() if any(vk in cls for vk in vehicle_keys))
 
-        # Reglas de Prioridad para el Panel VMS
-        # 1. CONTRAFLUJO (Peligro crítico)
+        # Determinar condiciones
         has_contraflujo = any("contraflujo" in c or "contra_flujo" in c or "wrong_way" in c for c in detected_classes)
-        # 2. PEATÓN / PERSONAS
-        has_people = any("people" in c or "peaton" in c or "person" in c for c in detected_classes)
-        # 3. CICLISTA
-        has_bicicleta = any("bicicleta" in c or "bicycle" in c or "ciclista" in c for c in detected_classes)
-        # 4. MOTOS
-        has_moto = any("moto" in c or "motocicle" in c or "motorcycle" in c for c in detected_classes)
+        has_emergency = any("ambulan" in c or "patrulla" in c for c in detected_classes)
+        bloqueo_interseccion = total_vehicles >= 10  # Asumimos que >=10 es un bloqueo de intersección (LOS E-F)
+        
+        has_people = any("people" in c or "peaton" in c or "person" in c or "pedestrian" in c for c in detected_classes)
+        alta_densidad_peatonal = sum(count for cls, count in class_counts.items() if any(pk in cls for pk in ["people", "peaton", "person", "pedestrian"])) >= 3
+        
+        has_carga = any("truck" in c or "camion" in c or "bus" in c for c in detected_classes)
+        
+        # Diccionarios de PMV
+        pmv1 = {}
+        pmv2 = {}
+        pmv3 = {}
+        
+        alert_level = "NORMAL"
+
+        # Jerarquía de Prioridades (Árbol de Decisión)
+        
+        if has_contraflujo or has_emergency or bloqueo_interseccion:
+            # Prioridad 1 (Peligro Crítico y Emergencia)
+            alert_level = "CRITICAL"
+            
+            pmv1 = {
+                "title": "MERCADO TRANCADO", "message": "DESVIO OBLIGADO\nPOR CALLE FEDERACION",
+                "color": "#FF1744", "bg_color": "#3A0007", "icon": "⛔", "is_flashing": True, "speed_limit": "10 KM/H"
+            }
+            pmv2 = {
+                "title": "ESQUINA BLOQUEADA", "message": "NO OBSTRUYA CRUCE\nESPERE EN LINEA",
+                "color": "#FF1744", "bg_color": "#3A0007", "icon": "⛔", "is_flashing": True, "speed_limit": "10 KM/H"
+            }
+            
+            if has_emergency:
+                pmv3 = {
+                    "title": "UNIDAD EMERGENCIA", "message": "CEDA EL PASO YA\nDESPEJE CALZADA",
+                    "color": "#FF1744", "bg_color": "#3A0007", "icon": "🚑", "is_flashing": True, "speed_limit": "10 KM/H"
+                }
+            else:
+                pmv3 = {
+                    "title": "GIRO COLON CERRADO", "message": "PROHIBIDO GIRO IZQUIERDA\nSIGA A AV MANAURE",
+                    "color": "#FF1744", "bg_color": "#3A0007", "icon": "🚫", "is_flashing": True, "speed_limit": "15 KM/H"
+                }
+
+        elif has_people and alta_densidad_peatonal:
+            # Prioridad 2 (Advertencia por Actores Vulnerables - Peatones)
+            alert_level = "WARNING"
+            
+            pmv1 = {
+                "title": "TRAFICO LENTO", "message": "CONGESTIÓN EN CALLE GARCES\nPREVENTIVO FEDERACIÓN",
+                "color": "#FFEA00", "bg_color": "#332D00", "icon": "⚠️", "is_flashing": False, "speed_limit": "15 KM/H"
+            }
+            pmv2 = {
+                "title": "ZONA COMERCIAL", "message": "PRIORIDAD PEATON\nREDUZCA VELOCIDAD",
+                "color": "#FFEA00", "bg_color": "#332D00", "icon": "🚶", "is_flashing": False, "speed_limit": "10 KM/H"
+            }
+            pmv3 = {
+                "title": "CALLE COLON SATURADA", "message": "SIGA DERECHO\nHACIA AV MANAURE",
+                "color": "#FFEA00", "bg_color": "#332D00", "icon": "➡️", "is_flashing": False, "speed_limit": "15 KM/H"
+            }
+            
+        elif has_carga:
+            # Prioridad 3 (Precaución por Obstrucciones y Carga/Descarga)
+            alert_level = "WARNING"
+            
+            pmv1 = {
+                "title": "GARCES SATURADA", "message": "DESVIO SUGERIDO\nPOR CALLE FEDERACION",
+                "color": "#FF9100", "bg_color": "#331600", "icon": "🚧", "is_flashing": False, "speed_limit": "15 KM/H"
+            }
+            pmv2 = {
+                "title": "VEHICULO DETENIDO", "message": "CANAL REDUCIDO\nPASO INTERMITENTE",
+                "color": "#FFEA00", "bg_color": "#332D00", "icon": "⚠️", "is_flashing": False, "speed_limit": "10 KM/H"
+            }
+            pmv3 = {
+                "title": "CALLE COLON SATURADA", "message": "SIGA DERECHO\nHACIA AV MANAURE",
+                "color": "#FFEA00", "bg_color": "#332D00", "icon": "➡️", "is_flashing": False, "speed_limit": "15 KM/H"
+            }
+
+        elif total_vehicles >= 12:
+            # Prioridad 4 (Congestión y Retención Moderada - LOS C-D)
+            alert_level = "CONGESTION"
+            
+            pmv1 = {
+                "title": "TRAFICO LENTO", "message": "CONGESTIÓN EN CALLE GARCES\nPREVENTIVO FEDERACIÓN",
+                "color": "#FFEA00", "bg_color": "#332D00", "icon": "⚠️", "is_flashing": False, "speed_limit": "15 KM/H"
+            }
+            pmv2 = {
+                "title": "CRUCE DESPEJADO", "message": "PASO CONTINUO",
+                "color": "#00E676", "bg_color": "#002B13", "icon": "✅", "is_flashing": False, "speed_limit": "20 KM/H"
+            }
+            pmv3 = {
+                "title": "CALLE COLON SATURADA", "message": "SIGA DERECHO\nHACIA AV MANAURE",
+                "color": "#FFEA00", "bg_color": "#332D00", "icon": "➡️", "is_flashing": False, "speed_limit": "15 KM/H"
+            }
+
+        else:
+            # Prioridad 5 (Flujo Libre y Condición Normal - LOS A-B)
+            alert_level = "NORMAL"
+            
+            pmv1 = {
+                "title": "ENTRADA LIBRE", "message": "GARCES FLUIDA",
+                "color": "#00E676", "bg_color": "#002B13", "icon": "✅", "is_flashing": False, "speed_limit": "20 KM/H"
+            }
+            pmv2 = {
+                "title": "CRUCE DESPEJADO", "message": "PASO CONTINUO",
+                "color": "#00E676", "bg_color": "#002B13", "icon": "✅", "is_flashing": False, "speed_limit": "20 KM/H"
+            }
+            pmv3 = {
+                "title": "COLON / MANAURE OK", "message": "GIRO A COLON LIBRE",
+                "color": "#00E676", "bg_color": "#002B13", "icon": "✅", "is_flashing": False, "speed_limit": "20 KM/H"
+            }
 
         timestamp_str = datetime.now().strftime("%H:%M:%S")
-
-        if has_contraflujo:
-            alert_level = "CRITICAL"
-            vms_title = "¡PELIGRO EXTREMO!"
-            vms_message = "VEHÍCULO EN CONTRAFLUJO DETECTADO\nNO ADELANTAR - REDUZCA VELOCIDAD"
-            vms_color = "#FF1744"  # Rojo Neón
-            vms_bg = "#3A0007"
-            vms_icon = "🚨 ⛔"
-            speed_limit = "20 KM/H"
-            is_flashing = True
-        elif has_moto:
-            alert_level = "INFO"
-            vms_title = "PRECAUCIÓN VIAL"
-            vms_message = "MOTOCICLETAS EN LA VÍA\nMANTENGA SU DISTANCIA"
-            vms_color = "#C6FF00"  # Verde Lima LED
-            vms_bg = "#1A2300"
-            vms_icon = "🏍️ ⚠️"
-            speed_limit = "60 KM/H"
-            is_flashing = False
-        elif has_people:
-            alert_level = "WARNING"
-            vms_title = "PRECAUCIÓN - PEATONES"
-            vms_message = "PEATONES EN CALZADA DETECTADOS\nCEDA EL PASO - VELOCIDAD MÁX 30 KM/H"
-            vms_color = "#00E5FF"  # Cyan Neón
-            vms_bg = "#002B33"
-            vms_icon = "🚶 ⚠️"
-            speed_limit = "30 KM/H"
-            is_flashing = True
-        elif has_bicicleta:
-            alert_level = "INFO"
-            vms_title = "PRECAUCIÓN VIAL"
-            vms_message = "CICLISTA EN CALZADA - DISTANCIA MÍNIMA 1.5M"
-            vms_color = "#00E5FF"  # Cyan LED
-            vms_bg = "#002B33"
-            vms_icon = "🚴 ⚠️"
-            speed_limit = "50 KM/H"
-            is_flashing = False
-        elif total_vehicles >= 6:
-            alert_level = "CONGESTION"
-            vms_title = "VÍA CONGESTIONADA"
-            vms_message = f"ALTO FLUJO VEHICULAR ({total_vehicles} VEHÍCULOS)\nREDUZCA LA VELOCIDAD Y ESPERE SU TURNO"
-            vms_color = "#FF6D00"
-            vms_bg = "#331600"
-            vms_icon = "⚠️ 🚗"
-            speed_limit = "40 KM/H"
-            is_flashing = False
-        elif total_vehicles > 0:
-            alert_level = "NORMAL"
-            vms_title = "TRÁFICO FLUIDO"
-            vms_message = f"TRÁFICO NORMAL EN VÍA ({total_vehicles} DETECTADOS)\nRESPETE EL LÍMITE DE VELOCIDAD"
-            vms_color = "#00E676"  # Verde Neón
-            vms_bg = "#002B13"
-            vms_icon = "🛣️ ✅"
-            speed_limit = "80 KM/H"
-            is_flashing = False
-        else:
-            alert_level = "NORMAL"
-            vms_title = "VÍA DESPEJADA"
-            vms_message = "SIN INCIDENCIAS REPORTADAS\nMANEJE CON SEGURIDAD"
-            vms_color = "#00E676"
-            vms_bg = "#002B13"
-            vms_icon = "🛣️ 🟢"
-            speed_limit = "80 KM/H"
-            is_flashing = False
+        # ---------------------------------------------------------
+        # ESTRUCTURACIÓN Y DESACOPLAMIENTO (DATA PAYLOAD)
+        # ---------------------------------------------------------
 
         result = {
             "timestamp": timestamp_str,
@@ -171,15 +219,9 @@ class TrafficAnalyticsEngine:
             "total_vehicles": total_vehicles,
             "class_counts": class_counts,
             "alert_level": alert_level,
-            "vms": {
-                "title": vms_title,
-                "message": vms_message,
-                "color": vms_color,
-                "bg_color": vms_bg,
-                "icon": vms_icon,
-                "is_flashing": is_flashing,
-                "speed_limit": speed_limit
-            }
+            "pmv1": pmv1,
+            "pmv2": pmv2,
+            "pmv3": pmv3
         }
 
         # Registrar en historial para métricas de tesis
@@ -188,8 +230,8 @@ class TrafficAnalyticsEngine:
             "Nivel_Alerta": alert_level,
             "Vehiculos": total_vehicles,
             "Clases_Detectadas": ", ".join([f"{k}:{v}" for k, v in class_counts.items()]) if class_counts else "Ninguna",
-            "Mensaje_VMS": vms_title,
-            "Limite_Velocidad": speed_limit
+            "Mensaje_PMV1": pmv1["title"],
+            "Limite_Velocidad": pmv1["speed_limit"]
         }
         self.history_logs.append(log_entry)
         # Mantener últimos 200 registros

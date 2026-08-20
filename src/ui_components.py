@@ -13,9 +13,9 @@ def get_custom_css() -> str:
             background: linear-gradient(180deg, #1e2229 0%, #111419 100%);
             border: 4px solid #3b4252;
             border-radius: 12px;
-            padding: 16px;
+            padding: 12px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.7), inset 0 0 15px rgba(0,0,0,0.9);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             position: relative;
         }
 
@@ -52,9 +52,9 @@ def get_custom_css() -> str:
             background-size: 6px 6px;
             border: 2px solid #2e3440;
             border-radius: 8px;
-            padding: 24px 18px;
+            padding: 12px 10px;
             text-align: center;
-            min-height: 180px;
+            min-height: 120px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -64,30 +64,30 @@ def get_custom_css() -> str:
 
         .vms-title {
             font-family: 'Share Tech Mono', monospace, 'Courier New';
-            font-size: 1.55rem;
+            font-size: 1.25rem;
             font-weight: 800;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             text-transform: uppercase;
-            margin-bottom: 10px;
-            line-height: 1.2;
+            margin-bottom: 6px;
+            line-height: 1.1;
         }
 
         .vms-body {
             font-family: 'Share Tech Mono', monospace, 'Courier New';
-            font-size: 1.15rem;
+            font-size: 1.0rem;
             font-weight: 600;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             white-space: pre-line;
-            line-height: 1.4;
+            line-height: 1.2;
         }
 
         .vms-badge {
             display: inline-block;
-            margin-top: 12px;
-            padding: 4px 12px;
+            margin-top: 8px;
+            padding: 3px 10px;
             border-radius: 20px;
             font-family: 'Inter', sans-serif;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 700;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.2);

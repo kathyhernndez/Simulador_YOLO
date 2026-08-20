@@ -9,12 +9,12 @@
 Esta plataforma interactiva desarrollada en **Streamlit** y empaquetada en **Docker** permite simular y evaluar en tiempo real la respuesta de un **Sistema Inteligente de Mensajes Variables (VMS / Panel LED)**, basándose en la inferencia de visión artificial proporcionada por modelos **YOLO locales**.
 
 ### 🎯 Características Principales
-1. **Pórtico VMS Virtual:** Pantalla LED de alta visibilidad que muestra advertencias automáticas según el evento detectado:
-   - 🚨 `¡PELIGRO! VEHÍCULO EN CONTRAFLUJO - NO ADELANTAR` (Rojo Neón intermitente).
-   - 🚶 `PRECAUCIÓN - PEATONES EN CALZADA DETECTADOS` (Cyan Neón).
-   - 🏍️ `PRECAUCIÓN VIAL - MOTOCICLETAS EN LA VÍA` (Verde Lima LED).
-   - ⚠️ `VÍA CONGESTIONADA - REDUZCA LA VELOCIDAD Y ESPERE SU TURNO` (Naranja LED).
-   - 🛣️ `TRÁFICO FLUIDO - RESPETE EL LÍMITE DE VELOCIDAD` (Verde).
+1. **Sistema Multi-Panel (PMV):** Simulación simultánea de 3 Paneles de Mensajería Variable ubicados en puntos estratégicos (Sector Mercado Viejo) que responden a un Motor Analítico de 5 Prioridades:
+   - **Prioridad 1 (Peligro Crítico/Emergencia):** 🚨 Contraflujos, ambulancias o bloqueos totales. Activa desvíos obligatorios, velocidad de 10 km/h y destellos rojos (Ej: `MERCADO TRANCADO / DESVIO OBLIGADO`).
+   - **Prioridad 2 (Advertencia Peatonal):** 🚶 Alta densidad de peatones. Reduce la velocidad a 10 km/h con advertencias amarillas (Ej: `PRIORIDAD PEATON`).
+   - **Prioridad 3 (Obstrucciones):** 🚧 Vehículos detenidos o carga/descarga. Advierte paso intermitente (Ej: `CANAL REDUCIDO / PASO INTERMITENTE`).
+   - **Prioridad 4 (Congestión):** ⚠️ Tráfico denso. Recomienda desvíos con alertas amarillas (Ej: `CONGESTIÓN EN CALLE GARCES / PREVENTIVO FEDERACIÓN`).
+   - **Prioridad 5 (Flujo Libre):** ✅ Vías despejadas. Permite paso continuo a 20 km/h en verde fijo (Ej: `CRUCE DESPEJADO / PASO CONTINUO`).
 2. **Detección de Múltiples Clases:** Identifica automóviles, vehículos en contraflujo, motocicletas, ciclistas y peatones interactuando con la vía.
 3. **Métricas Académicas para Tesis:** Tacómetros de latencia (ms), distribución de alertas, gráficos interactivos con Plotly y descarga del registro de auditoría en formato **CSV**.
 4. **Modo Resiliencia / Demo Offline:** Incluye escenarios sintéticos calibrados para presentaciones y defensas sin dependencia de conexión externa.
