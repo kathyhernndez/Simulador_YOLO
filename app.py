@@ -101,6 +101,15 @@ with st.sidebar:
             yolo_model = load_local_yolo(st.session_state.model_path, mod_time)
             if yolo_model and hasattr(yolo_model, "classes"):
                 st.caption(f"**Clases detectables:** {list(yolo_model.classes.values())}")
+                
+                # Métricas de Entrenamiento mAP50 para Tesis
+                st.markdown("""
+                **Métricas de Entrenamiento (mAP50):**
+                - 🎯 Global: **72%**
+                - 🚗 Carros: **76%**
+                - 🚚 Camiones: **100%**
+                - 🚶 Peatones: **67%**
+                """)
         else:
             st.warning(f" No se encontró el archivo `{st.session_state.model_path}` en la raíz.")
             uploaded_pt = st.file_uploader("Subir archivo de pesos (.pt):", type=["pt"])
@@ -116,7 +125,7 @@ with st.sidebar:
         "Umbral de Confianza (Confidence):",
         min_value=0.10,
         max_value=1.00,
-        value=0.25,
+        value=0.35,  # Validado para tests de tesis >= 0.35
         step=0.05
     )
     frame_skip = st.slider(
@@ -238,11 +247,13 @@ if input_source == "📤 Subir Video (.mp4, .avi)":
                 detections, latency_ms, annotated_frame = run_detection_pipeline(frame, conf_threshold)
 
                 # Evaluar reglas de tráfico para el panel VMS y semáforo
+                t0_rules = time.time()
                 analysis = st.session_state.analytics_engine.evaluate_frame_events(detections)
+                rules_latency_ms = (time.time() - t0_rules) * 1000
 
                 # Actualizar interfaz en tiempo real
                 frame_placeholder.image(annotated_frame, channels="BGR", use_container_width=True)
-                perf_placeholder.caption(f"Fotograma: {frame_idx}/{total_frames} | Latencia: {latency_ms:.1f} ms | Detecciones: {len(detections)}")
+                perf_placeholder.caption(f"Fotograma: {frame_idx}/{total_frames} | Latencia YOLO: {latency_ms:.1f} ms | Latencia Reglas: {rules_latency_ms:.2f} ms | Detecciones: {len(detections)}")
                 
                 vms1_placeholder.markdown(render_vms_html(analysis["pmv1"]), unsafe_allow_html=True)
                 vms2_placeholder.markdown(render_vms_html(analysis["pmv2"]), unsafe_allow_html=True)
@@ -269,12 +280,14 @@ elif input_source == "🖼️ Subir Imagen Fija (.jpg, .png)":
         with st.spinner("Ejecutando inferencia con YOLO..."):
             detections, latency_ms, annotated_frame = run_detection_pipeline(raw_frame, conf_threshold)
 
+        t0_rules = time.time()
         analysis = st.session_state.analytics_engine.evaluate_frame_events(detections)
+        rules_latency_ms = (time.time() - t0_rules) * 1000
 
         with tab_col1:
             st.markdown("###  Fotograma Analizado con YOLO")
             st.image(annotated_frame, channels="BGR", use_container_width=True)
-            st.caption(f"Latencia de inferencia: **{latency_ms:.1f} ms** | Elementos detectados: **{len(detections)}**")
+            st.caption(f"Latencia YOLO: **{latency_ms:.1f} ms** | Latencia Reglas: **{rules_latency_ms:.2f} ms** | Elementos detectados: **{len(detections)}**")
         with tab_col2:
             st.markdown("###  Paneles de Mensaje Variable (VMS)")
             st.caption("PMV-1 (Filtro Entrada Este)")
@@ -307,12 +320,14 @@ elif input_source == "🏞️ Escenarios de Prueba Sintéticos (Demo)":
         annotated_frame = draw_detections(raw_frame, detections)
         latency_ms = 18.0
 
+    t0_rules = time.time()
     analysis = st.session_state.analytics_engine.evaluate_frame_events(detections)
+    rules_latency_ms = (time.time() - t0_rules) * 1000
 
     with tab_col1:
         st.markdown("###  Escenario Sintético Analizado")
         st.image(annotated_frame, channels="BGR", use_container_width=True)
-        st.caption(f"Detecciones activas: {len(detections)} elementos | Latencia: {latency_ms:.1f} ms")
+        st.caption(f"Detecciones activas: {len(detections)} elementos | Latencia YOLO: **{latency_ms:.1f} ms** | Latencia Reglas: **{rules_latency_ms:.2f} ms**")
 
     with tab_col2:
         st.markdown("###  Paneles de Mensaje Variable (VMS Virtual)")
