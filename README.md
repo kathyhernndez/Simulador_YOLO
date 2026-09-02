@@ -1,5 +1,11 @@
 # 🚦 Simulador de Sistema Inteligente de Señalización Vial (SMV) y Pórtico VMS
 
+**Título del proyecto:** Simulador y módulo de visión artificial para análisis de flujo.
+
+**Contexto de aplicación:** "Desarrollado como soporte tecnológico y prototipo experimental para el Trabajo Especial de Grado de Ingeniería Civil titulado '[Título]', presentado por [Nombre del Bachiller]."
+
+**Créditos:** Autora del software: Katherine Hernández.
+
 > Sistema de Señalización Inteligente en Intersecciones y Vías Rápidas con Detección de Objetos, Paneles de Mensajería Variable (VMS).
 
 ---

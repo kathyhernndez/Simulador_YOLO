@@ -1,3 +1,10 @@
+# =====================================================================
+# Proyecto: Simulador de Flujo e Inferencia Visual
+# Asesoría Técnica: Tesis de Grado en Ingeniería Civil
+# Autor y Desarrollo de Software: Katherine Hernández
+# Año: 2026
+# Licencia: MIT
+# =====================================================================
 """
 Smoke Test para Validar la Integración de Módulos del Simulador
 """

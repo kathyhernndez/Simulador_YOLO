@@ -1,3 +1,11 @@
+# =====================================================================
+# Proyecto: Simulador de Flujo e Inferencia Visual
+# Asesoría Técnica: Tesis de Grado en Ingeniería Civil
+# Autor y Desarrollo de Software: Katherine Hernández
+# Año: 2026
+# Licencia: MIT
+# =====================================================================
+
 # Script de inicio rápido para Docker en Windows PowerShell
 Write-Host "====================================================" -ForegroundColor Cyan
 Write-Host "🚦 Levantando Simulador de Tráfico y VMS con Docker..." -ForegroundColor Yellow

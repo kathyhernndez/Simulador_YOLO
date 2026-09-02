@@ -1,3 +1,10 @@
+# =====================================================================
+# Proyecto: Simulador de Flujo e Inferencia Visual
+# Asesoría Técnica: Tesis de Grado en Ingeniería Civil
+# Autor y Desarrollo de Software: Katherine Hernández
+# Año: 2026
+# Licencia: MIT
+# =====================================================================
 """
 Componentes Visuales y Estilos CSS Personalizados para el Simulador VMS y Semáforo Inteligente
 """

@@ -1,3 +1,10 @@
+# =====================================================================
+# Proyecto: Simulador de Flujo e Inferencia Visual
+# Asesoría Técnica: Tesis de Grado en Ingeniería Civil
+# Autor y Desarrollo de Software: Katherine Hernández
+# Año: 2026
+# Licencia: MIT
+# =====================================================================
 """
 Lógica de Negocio y Reglas de Tráfico:
 - Detección de eventos críticos.
@@ -9,6 +16,7 @@ Lógica de Negocio y Reglas de Tráfico:
 from typing import List, Dict, Any, Tuple
 import cv2
 import numpy as np
+import time
 from datetime import datetime
 
 # Paleta de colores para visualización de clases (BGR para OpenCV)
@@ -79,6 +87,14 @@ def get_class_color(class_name: str) -> Tuple[int, int, int]:
 class TrafficAnalyticsEngine:
     def __init__(self):
         self.history_logs: List[Dict[str, Any]] = []
+        # Memoria de estado para Histéresis (Hold Time)
+        self.current_priority = 5  # 5 = NORMAL, 1 = CRÍTICO (Mayor riesgo)
+        self.current_pmv1 = {}
+        self.current_pmv2 = {}
+        self.current_pmv3 = {}
+        self.current_alert_level = "NORMAL"
+        self.last_trigger_time = 0.0
+        self.HOLD_TIME_SECONDS = 30.0  # 30 segundos de retención para estabilidad de VMS
 
     def evaluate_frame_events(self, detections: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
@@ -107,106 +123,134 @@ class TrafficAnalyticsEngine:
         
         has_carga = any("truck" in c or "camion" in c or "bus" in c for c in detected_classes)
         
-        # Diccionarios de PMV
-        pmv1 = {}
-        pmv2 = {}
-        pmv3 = {}
-        
-        alert_level = "NORMAL"
-
-        # Jerarquía de Prioridades (Árbol de Decisión)
+        # Jerarquía de Prioridades (Árbol de Decisión - Estado Instantáneo)
         
         if has_contraflujo or has_emergency or bloqueo_interseccion:
-            # Prioridad 1 (Peligro Crítico y Emergencia)
-            alert_level = "CRITICAL"
+            raw_priority = 1
+            raw_alert_level = "CRITICAL"
             
-            pmv1 = {
+            raw_pmv1 = {
                 "title": "VÍA CONGESTIONADA", "message": "DESVIO OBLIGATORIO\nPOR CALLE FEDERACION",
                 "color": "#FF1744", "bg_color": "#3A0007", "icon": "⛔", "is_flashing": True, "speed_limit": "10 KM/H"
             }
-            pmv2 = {
+            raw_pmv2 = {
                 "title": "ESQUINA BLOQUEADA", "message": "NO OBSTRUYA CRUCE\nESPERE EN LINEA",
                 "color": "#FF1744", "bg_color": "#3A0007", "icon": "⛔", "is_flashing": True, "speed_limit": "10 KM/H"
             }
             
             if has_emergency:
-                pmv3 = {
+                raw_pmv3 = {
                     "title": "UNIDAD EMERGENCIA", "message": "CEDA EL PASO YA\nDESPEJE CALZADA",
                     "color": "#FF1744", "bg_color": "#3A0007", "icon": "🚑", "is_flashing": True, "speed_limit": "10 KM/H"
                 }
             else:
-                pmv3 = {
+                raw_pmv3 = {
                     "title": "GIRO COLON CERRADO", "message": "PROHIBIDO GIRO IZQUIERDA\nSIGA A AV MANAURE",
                     "color": "#FF1744", "bg_color": "#3A0007", "icon": "🚫", "is_flashing": True, "speed_limit": "15 KM/H"
                 }
 
         elif has_people and alta_densidad_peatonal:
-            # Prioridad 2 (Advertencia por Actores Vulnerables - Peatones)
-            alert_level = "WARNING"
+            raw_priority = 2
+            raw_alert_level = "WARNING"
             
-            pmv1 = {
+            raw_pmv1 = {
                 "title": "TRAFICO LENTO", "message": "CONGESTIÓN EN CALLE GARCES\nPREVENTIVO FEDERACIÓN",
                 "color": "#FFEA00", "bg_color": "#332D00", "icon": "⚠️", "is_flashing": False, "speed_limit": "15 KM/H"
             }
-            pmv2 = {
+            raw_pmv2 = {
                 "title": "ZONA COMERCIAL", "message": "PRIORIDAD PEATON\nREDUZCA VELOCIDAD",
                 "color": "#FFEA00", "bg_color": "#332D00", "icon": "🚶", "is_flashing": False, "speed_limit": "10 KM/H"
             }
-            pmv3 = {
+            raw_pmv3 = {
                 "title": "CALLE COLON SATURADA", "message": "SIGA DERECHO\nHACIA AV MANAURE",
                 "color": "#FFEA00", "bg_color": "#332D00", "icon": "➡️", "is_flashing": False, "speed_limit": "15 KM/H"
             }
             
         elif has_carga:
-            # Prioridad 3 (Precaución por Obstrucciones y Carga/Descarga)
-            alert_level = "WARNING"
+            raw_priority = 3
+            raw_alert_level = "WARNING"
             
-            pmv1 = {
+            raw_pmv1 = {
                 "title": "GARCES SATURADA", "message": "DESVIO SUGERIDO\nPOR CALLE FEDERACION",
                 "color": "#FF9100", "bg_color": "#331600", "icon": "🚧", "is_flashing": False, "speed_limit": "15 KM/H"
             }
-            pmv2 = {
+            raw_pmv2 = {
                 "title": "VEHICULO DETENIDO", "message": "CANAL REDUCIDO\nPASO INTERMITENTE",
                 "color": "#FFEA00", "bg_color": "#332D00", "icon": "⚠️", "is_flashing": False, "speed_limit": "10 KM/H"
             }
-            pmv3 = {
+            raw_pmv3 = {
                 "title": "CALLE COLON SATURADA", "message": "SIGA DERECHO\nHACIA AV MANAURE",
                 "color": "#FFEA00", "bg_color": "#332D00", "icon": "➡️", "is_flashing": False, "speed_limit": "15 KM/H"
             }
 
         elif total_vehicles >= 12:
-            # Prioridad 4 (Congestión y Retención Moderada - LOS C-D)
-            alert_level = "CONGESTION"
+            raw_priority = 4
+            raw_alert_level = "CONGESTION"
             
-            pmv1 = {
+            raw_pmv1 = {
                 "title": "TRAFICO LENTO", "message": "CONGESTIÓN EN CALLE GARCES\nPREVENTIVO FEDERACIÓN",
                 "color": "#FFEA00", "bg_color": "#332D00", "icon": "⚠️", "is_flashing": False, "speed_limit": "15 KM/H"
             }
-            pmv2 = {
+            raw_pmv2 = {
                 "title": "CRUCE DESPEJADO", "message": "PASO CONTINUO",
                 "color": "#00E676", "bg_color": "#002B13", "icon": "✅", "is_flashing": False, "speed_limit": "20 KM/H"
             }
-            pmv3 = {
+            raw_pmv3 = {
                 "title": "CALLE COLON SATURADA", "message": "SIGA DERECHO\nHACIA AV MANAURE",
                 "color": "#FFEA00", "bg_color": "#332D00", "icon": "➡️", "is_flashing": False, "speed_limit": "15 KM/H"
             }
 
         else:
-            # Prioridad 5 (Flujo Libre y Condición Normal - LOS A-B)
-            alert_level = "NORMAL"
+            raw_priority = 5
+            raw_alert_level = "NORMAL"
             
-            pmv1 = {
+            raw_pmv1 = {
                 "title": "ENTRADA LIBRE", "message": "GARCES FLUIDA",
                 "color": "#00E676", "bg_color": "#002B13", "icon": "✅", "is_flashing": False, "speed_limit": "20 KM/H"
             }
-            pmv2 = {
+            raw_pmv2 = {
                 "title": "CRUCE DESPEJADO", "message": "PASO CONTINUO",
                 "color": "#00E676", "bg_color": "#002B13", "icon": "✅", "is_flashing": False, "speed_limit": "20 KM/H"
             }
-            pmv3 = {
+            raw_pmv3 = {
                 "title": "COLON / MANAURE OK", "message": "GIRO A COLON LIBRE",
                 "color": "#00E676", "bg_color": "#002B13", "icon": "✅", "is_flashing": False, "speed_limit": "20 KM/H"
             }
+
+        # ---------------------------------------------------------
+        # LÓGICA DE HISTÉRESIS / COOLDOWN TIMER
+        # ---------------------------------------------------------
+        current_time = time.time()
+        
+        # Si la nueva prioridad detectada es IGUAL o MÁS PELIGROSA (número menor)
+        # o si es la primera vez que se evalúa (estado vacío)
+        if raw_priority <= self.current_priority or not self.current_pmv1:
+            self.current_priority = raw_priority
+            self.current_alert_level = raw_alert_level
+            self.current_pmv1 = raw_pmv1
+            self.current_pmv2 = raw_pmv2
+            self.current_pmv3 = raw_pmv3
+            # Actualizamos el reloj de "último peligro detectado"
+            self.last_trigger_time = current_time
+        else:
+            # Si el riesgo DISMINUYÓ (ej. pasó de CRITICAL a NORMAL), aplicamos Histéresis
+            if (current_time - self.last_trigger_time) >= self.HOLD_TIME_SECONDS:
+                # Ya pasó el tiempo de retención, es seguro degradar la alerta
+                self.current_priority = raw_priority
+                self.current_alert_level = raw_alert_level
+                self.current_pmv1 = raw_pmv1
+                self.current_pmv2 = raw_pmv2
+                self.current_pmv3 = raw_pmv3
+                self.last_trigger_time = current_time
+            else:
+                # Seguimos en el periodo de retención, NO actualizamos el estado actual
+                pass
+
+        # Usar el estado "retenido" o "actualizado" para el resultado final
+        alert_level = self.current_alert_level
+        pmv1 = self.current_pmv1
+        pmv2 = self.current_pmv2
+        pmv3 = self.current_pmv3
 
         timestamp_str = datetime.now().strftime("%H:%M:%S")
         # ---------------------------------------------------------

@@ -1,3 +1,10 @@
+# =====================================================================
+# Proyecto: Simulador de Flujo e Inferencia Visual
+# Asesoría Técnica: Tesis de Grado en Ingeniería Civil
+# Autor y Desarrollo de Software: Katherine Hernández
+# Año: 2026
+# Licencia: MIT
+# =====================================================================
 """
 Simulador de Sistema Inteligente de Señalización de Tráfico y Panel VMS
 Integración con Modelo Local YOLO (best.pt)
