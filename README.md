@@ -2,11 +2,19 @@
 
 **Título del proyecto:** Simulador y módulo de visión artificial para análisis de flujo.
 
-**Contexto de aplicación:** "Desarrollado como soporte tecnológico y prototipo experimental para el Trabajo Especial de Grado de Ingeniería Civil titulado '[Título]', presentado por [Nombre del Bachiller]."
+**Contexto de aplicación:** "Desarrollado como soporte tecnológico y prototipo experimental para el Trabajo Especial de Grado de Ingeniería Civil, presentado por [Francisco Lindado]."
 
-**Créditos:** Autora del software: Katherine Hernández.
+**Créditos:** Desarrolladora del software: Katherine Hernández.
 
 > Sistema de Señalización Inteligente en Intersecciones y Vías Rápidas con Detección de Objetos, Paneles de Mensajería Variable (VMS).
+
+---
+
+## 📄 Licencia
+
+Este proyecto está distribuido bajo la **Licencia MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+Copyright (c) 2026 Katherine Hernández
 
 ---
 
@@ -74,9 +82,9 @@ SMV/
 ├── Dockerfile                  # Imagen Docker optimizada (Python 3.11-slim + OpenCV)
 ├── docker-compose.yml          # Configuración de orquestación y puertos (8501:8501)
 ├── requirements.txt            # Dependencias del proyecto
-├── .env.example                # Plantilla de variables de entorno
 ├── app.py                      # Aplicación principal Streamlit
 ├── smoke_test.py               # Pruebas de integración
+|__ best.pt                     # Pesos entrenados YOLOv11
 └── src/
     ├── traffic_logic.py        # Motor de reglas viales y alertas VMS
     ├── mock_detector.py        # Generador de escenarios sintéticos para demo

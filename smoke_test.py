@@ -14,7 +14,7 @@ import numpy as np
 
 def run_smoke_tests():
     print("=" * 60)
-    print("🚀 INICIANDO PRUEBAS DE INTEGRACIÓN (SMOKE TESTS)")
+    print(" INICIANDO PRUEBAS DE INTEGRACIÓN (SMOKE TESTS)")
     print("=" * 60)
 
     # 1. Probar generador de escenarios
@@ -85,7 +85,7 @@ def run_smoke_tests():
     print(f"  -> PASÓ: Modelo best.pt cargado exitosamente. Clases: {yolo_local.classes} | Latencia de prueba: {lat:.1f}ms")
 
     print("=" * 60)
-    print("🎉 ¡TODOS LOS SMOKE TESTS (5/5) PASARON EXITOSAMENTE!")
+    print("¡TODOS LOS SMOKE TESTS (5/5) PASARON EXITOSAMENTE!")
     print("=" * 60)
 
 if __name__ == "__main__":
