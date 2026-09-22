@@ -2,9 +2,9 @@
 
 **Título del proyecto:** Simulador y módulo de visión artificial para análisis de flujo.
 
-**Contexto de aplicación:** "Desarrollado como soporte tecnológico y prototipo experimental para el Trabajo Especial de Grado de Ingeniería Civil, presentado por [Francisco Lindado]."
+**Contexto de aplicación:** "Desarrollado como soporte tecnológico y prototipo experimental para el Trabajo Especial de Grado de Ingeniería Civil, presentado por ING. Civil (E) Francisco Lindado."
 
-**Créditos:** Desarrolladora del software: Katherine Hernández.
+**Créditos:** Desarrolladora del software: ING. Informática (E) Katherine Hernández.
 
 > Sistema de Señalización Inteligente en Intersecciones y Vías Rápidas con Detección de Objetos, Paneles de Mensajería Variable (VMS).
 
